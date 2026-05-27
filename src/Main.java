@@ -11,9 +11,9 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("╔══════════════════════════════════════════════════════════════╗");
-        System.out.println("║  基于同态加密的隐私数据保护系统实现                         ║");
-        System.out.println("║  北京邮电大学 信息安全编程技术与实例开发 课程设计          ║");
-        System.out.println("║  RSA 乘法同态 & Paillier 加法同态 方案对比                  ║");
+        System.out.println("║  基于同态加密的隐私数据保护系统实现                          ║");
+        System.out.println("║  北京邮电大学 信息安全编程技术与实例开发 课程设计            ║");
+        System.out.println("║  RSA 乘法同态 & Paillier 加法同态 方案对比                   ║");
         System.out.println("╚══════════════════════════════════════════════════════════════╝");
 
         // ---- Correctness verification ----

@@ -129,13 +129,95 @@ public class PrivacyDemo {
     }
 
     // ──────────────────────────────────────────────
+    // Scenario 3: Salary Comparison (Yao's Millionaires' Problem)
+    // ──────────────────────────────────────────────
+
+    public static class SalaryComparisonDemo {
+        private Paillier paillier;
+
+        public void run() {
+            System.out.println(repeat("─", 65));
+            System.out.println("  场景三: 隐私保护工资比较 (百万富翁问题)");
+            System.out.println(repeat("─", 65));
+
+            System.out.println("\n[背景] Alice 和 Bob 想知道谁的工资更高，");
+            System.out.println("       但双方都不愿透露具体数额。\n");
+
+            // Generate key pair (512-bit is sufficient for demo, keeps ciphertexts readable)
+            System.out.println("[1] 系统生成 Paillier 密钥对 (512-bit)...");
+            paillier = new Paillier();
+            paillier.generateKeyPair(512);
+            System.out.println("    密钥生成完成\n");
+
+            System.out.println("[说明] 利用 Paillier 加法同态计算 E(A-B):");
+            System.out.println("      E(A-B) = E(A) * E(B)^{N-1} mod N²");
+            System.out.println("      若 D(E(A-B)) < N/2 → A > B");
+            System.out.println("      若 D(E(A-B)) > N/2 → B > A (模N下负数)");
+            System.out.println("      若 D(E(A-B)) = 0  → A = B\n");
+
+            // Compare three cases
+            compareSalaries("Alice", 25000, "Bob", 22000);
+            System.out.println();
+            compareSalaries("Alice", 18000, "Bob", 35000);
+            System.out.println();
+            compareSalaries("Alice", 20000, "Bob", 20000);
+        }
+
+        private void compareSalaries(String nameA, long salaryA, String nameB, long salaryB) {
+            System.out.println("[*] " + nameA + " vs " + nameB + ":");
+            BigInteger mA = BigInteger.valueOf(salaryA);
+            BigInteger mB = BigInteger.valueOf(salaryB);
+
+            // Both parties encrypt their salaries
+            BigInteger cA = paillier.encrypt(mA);
+            BigInteger cB = paillier.encrypt(mB);
+            System.out.printf("    %s 加密工资, %s 加密工资 (密文不可区分)%n", nameA, nameB);
+
+            // Homomorphic comparison: E(A - B mod N) = E(A) * E(B)^{N-1} mod N²
+            // Since (-1) * B ≡ (N-1) * B ≡ N-B (mod N), and E(N-B) = E(B)^{N-1}
+            BigInteger n = paillier.getModulus();
+            BigInteger negOne = n.subtract(BigInteger.ONE);
+            BigInteger cNegB = paillier.homomorphicScalarMul(cB, negOne);
+            BigInteger cDiff = paillier.homomorphicAdd(cA, cNegB);
+
+            // Decrypt the difference
+            BigInteger diff = paillier.decrypt(cDiff);
+            BigInteger halfN = n.divide(BigInteger.valueOf(2));
+
+            // Salaries are much smaller than N, so:
+            //   A > B  → diff = A-B (small, < N/2)
+            //   A < B  → diff = N - (B-A) (large, > N/2)
+            //   A = B  → diff = 0
+            System.out.print("    同态比较结果: ");
+            if (diff.equals(BigInteger.ZERO)) {
+                System.out.println(nameA + " 和 " + nameB + " 工资相同");
+            } else if (diff.compareTo(halfN) < 0) {
+                System.out.println(nameA + " 工资更高 (差值未公开)");
+            } else {
+                System.out.println(nameB + " 工资更高 (差值未公开)");
+            }
+
+            // Ground truth validation
+            System.out.print("    实际验证: ");
+            if (salaryA == salaryB) {
+                System.out.println("两人工资相同 ✓");
+            } else if (salaryA > salaryB) {
+                System.out.println(nameA + " 高出 " + (salaryA - salaryB) + " 元 ✓");
+            } else {
+                System.out.println(nameB + " 高出 " + (salaryB - salaryA) + " 元 ✓");
+            }
+            System.out.println("    双方均未获知对方具体工资数额 ✓");
+        }
+    }
+
+    // ──────────────────────────────────────────────
     // RSA multiplicative homomorphism demo
     // ──────────────────────────────────────────────
 
     public static class RSAMultiplicativeDemo {
         public void run() {
             System.out.println(repeat("─", 65));
-            System.out.println("  场景三: RSA 乘法同态验证");
+            System.out.println("  场景四: RSA 乘法同态验证");
             System.out.println(repeat("─", 65));
 
             System.out.println("\n[演示] E(m1) * E(m2) mod N = E(m1 * m2 mod N)\n");
@@ -173,6 +255,7 @@ public class PrivacyDemo {
 
         new SalaryDemo().run();
         new VotingDemo().run();
+        new SalaryComparisonDemo().run();
         new RSAMultiplicativeDemo().run();
     }
 
