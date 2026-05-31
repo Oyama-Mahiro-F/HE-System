@@ -46,6 +46,10 @@ public class RSAHomomorphic implements HEInterface {
         if (plaintext.compareTo(n) >= 0) {
             throw new IllegalArgumentException("Plaintext must be < N");
         }
+        // ⚠ 安全警告: 当前使用 textbook RSA (无 OAEP 填充)，以保留乘法同态性质。
+        // 这意味着加密是确定性的（相同明文 → 相同密文），不满足 IND-CPA 语义安全。
+        // 在生产环境中，应使用 Paillier 等语义安全的同态加密方案。
+        // 攻击者可通过候选明文加密比对来推断明文内容。
         return plaintext.modPow(e, n);
     }
 
